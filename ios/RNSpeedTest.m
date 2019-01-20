@@ -45,6 +45,54 @@ RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(
     [[session dataTaskWithURL:self.url] resume];
 })
 
+RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
+                  reject:(__unused RCTPromiseRejectBlock)reject)
+{
+    Reachability *reachability = [Reachability reachabilityForInternetConnection];
+    
+    [reachability startNotifier];
+    
+    NetworkStatus status = [reachability currentReachabilityStatus];
+    
+    if(status == NotReachable)
+    {
+        resolve(@"NONE");
+    }
+    else if (status == ReachableViaWiFi)
+    {
+        resolve(@"WIFI");
+    }
+    else if (status == ReachableViaWWAN)
+    {
+        CTTelephonyNetworkInfo *netinfo = [[CTTelephonyNetworkInfo alloc] init];
+        NSString * carrierType = netinfo.currentRadioAccessTechnology;
+        if ([carrierType isEqualToString:CTRadioAccessTechnologyGPRS]) {
+            resolve(@"2G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyEdge]) {
+            resolve(@"2G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyWCDMA]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyHSDPA]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyHSUPA]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyCDMA1x]) {
+            resolve(@"2G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyCDMAEVDORev0]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyCDMAEVDORevA]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyCDMAEVDORevB]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyeHRPD]) {
+            resolve(@"3G");
+        } else if ([carrierType isEqualToString:CTRadioAccessTechnologyLTE]) {
+            resolve(@"LTE");
+        }
+        
+    }
+}
+
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     //NSLog(@"data received %d", (int)[data length]);
     self.bytesReceived += [data length];

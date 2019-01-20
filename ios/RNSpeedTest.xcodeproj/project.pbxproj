@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		B3E7B58A1CC2AC0600A0062D /* RNSpeedTest.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNSpeedTest.m */; };
+		D8120DAD21F419FA005B5CB8 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = D8120DAC21F419FA005B5CB8 /* Reachability.m */; };
+		D8120DB021F41BBE005B5CB8 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,6 +28,10 @@
 		134814201AA4EA6300B7C361 /* libRNSpeedTest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNSpeedTest.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3E7B5881CC2AC0600A0062D /* RNSpeedTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNSpeedTest.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNSpeedTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNSpeedTest.m; sourceTree = "<group>"; };
+		D8120DAA21F4188B005B5CB8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		D8120DAC21F419FA005B5CB8 /* Reachability.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
+		D8120DAE21F41A0F005B5CB8 /* Reachability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8120DB021F41BBE005B5CB8 /* CoreTelephony.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,10 +57,22 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				D8120DAE21F41A0F005B5CB8 /* Reachability.h */,
+				D8120DAC21F419FA005B5CB8 /* Reachability.m */,
 				B3E7B5881CC2AC0600A0062D /* RNSpeedTest.h */,
 				B3E7B5891CC2AC0600A0062D /* RNSpeedTest.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
+				D8120DA921F4188B005B5CB8 /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		D8120DA921F4188B005B5CB8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */,
+				D8120DAA21F4188B005B5CB8 /* SystemConfiguration.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +131,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8120DAD21F419FA005B5CB8 /* Reachability.m in Sources */,
 				B3E7B58A1CC2AC0600A0062D /* RNSpeedTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -204,7 +224,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
-				"$(inherited)",
+					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",

@@ -4,7 +4,11 @@
 #else
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
+#import "Reachability.h"
+#import<CoreTelephony/CTTelephonyNetworkInfo.h>
+
 #endif
+Reachability* reachability;
 
 @interface RNSpeedTest : RCTEventEmitter <RCTBridgeModule, NSURLSessionDelegate, NSURLSessionDataDelegate>
 @property (nonatomic) CFAbsoluteTime startTime;
