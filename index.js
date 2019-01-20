@@ -14,6 +14,9 @@ export default class SpeedTest {
     static testDownloadSpeedWithTimeout(url, epochSize, timeout){
         RNSpeedTest.testDownloadSpeedWithTimeout(url, epochSize, timeout);
     }
+    static testUploadSpeedWithTimeout(url, epochSize, timeout){
+        RNSpeedTest.testUploadSpeedWithTimeout(url, epochSize, timeout);
+    }
     static async getNetworkType(){
         return RNSpeedTest.getNetworkType();
     }

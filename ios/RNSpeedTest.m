@@ -1,5 +1,6 @@
 
 #import "RNSpeedTest.h"
+#import <React/RCTLog.h>
 
 @implementation RNSpeedTest
 {
@@ -23,11 +24,12 @@
 {
     return dispatch_get_main_queue();
 }
+
 RCT_EXPORT_MODULE(RNSpeedTest)
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"onCompleteDownloadTest",@"onCompleteUploadTest",@"onCompletePingTest", @"onErrorDownloadTest", @"onErrorUploadTest", @"onErrorPingTest"];
+    return @[@"onCompleteTest", @"onErrorTest", @"onCompleteEpoch"];
 }
 
 RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(int)epochSize timeoutMs:(double)timeoutMs {
@@ -43,6 +45,27 @@ RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(
     configuration.timeoutIntervalForResource = timeoutMs/1000;
     NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
     [[session dataTaskWithURL:self.url] resume];
+})
+
+RCT_EXPORT_METHOD(testUploadSpeedWithTimeout:(NSString*) urlString epochSize:(int)epochSize timeoutMs:(double)timeoutMs {
+    self.url = [NSURL URLWithString:urlString];
+    self.startTime = CFAbsoluteTimeGetCurrent();
+    self.stopTime = self.startTime;
+    self.bytesSent = 0;
+    self.dlEpochSize = epochSize;
+    self.dlEpoch = 1;
+    
+    NSURL *fileUrl = [[NSBundle mainBundle]
+                    URLForResource: @"dummy" withExtension:@"text"];
+    
+    
+    NSLog(@"Upload test started timeout: %fms epochSize: %d url: %@", timeoutMs, epochSize, urlString);
+    
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.timeoutIntervalForResource = timeoutMs/1000;
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+    NSURLRequest *nsUrlRequest = [NSURLRequest requestWithURL:self.url];
+    [[session uploadTaskWithRequest:nsUrlRequest fromFile:fileUrl] resume];
 })
 
 RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
@@ -94,12 +117,23 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    //NSLog(@"data received %d", (int)[data length]);
+    NSLog(@"data received %d", (int)[data length]);
     self.bytesReceived += [data length];
     self.stopTime = CFAbsoluteTimeGetCurrent();
 }
 
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+   didSendBodyData:(int64_t)bytesSent
+    totalBytesSent:(int64_t)totalBytesSent
+totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
+    self.bytesSent += bytesSent;
+    NSLog(@"didSendBodyData %ld %ld of %ld", (long)bytesSent, (long)totalBytesSent, (long)totalBytesExpectedToSend);
+}
+
+
 -(void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler{
+    NSLog(@"didReceiveResponse");
     self.startTime = CFAbsoluteTimeGetCurrent();
     completionHandler(NSURLSessionResponseAllow);
 }
@@ -117,17 +151,19 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
             self.dlEpoch += 1;
             self.startTime = CFAbsoluteTimeGetCurrent();
             self.bytesReceived = 0;
+            [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
         }
         else{
             [[session dataTaskWithURL:self.url] cancel];
+            if (hasListeners) {
+                [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @(speed)}];
+            }
         }
-        if (hasListeners) {
-            [self sendEventWithName:@"onCompleteDownloadTest" body:@{@"speed": @(speed)}];
-        }
+
     } else {
-        NSLog(@"Download test is done: %@", error.userInfo);
+        NSLog(@"Test is done: %@", error.userInfo);
         if(hasListeners){
-            [self sendEventWithName:@"onErrorDownloadTest" body:@{@"error": error.userInfo}];
+            [self sendEventWithName:@"onErrorTest" body:@{@"error": error.userInfo}];
         }
         
     }

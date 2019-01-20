@@ -15,6 +15,7 @@ Reachability* reachability;
 @property (nonatomic) CFAbsoluteTime stopTime;
 @property (nonatomic) NSURL *url;
 @property (nonatomic) long long bytesReceived;
+@property (nonatomic) long long bytesSent;
 @property (nonatomic) int dlEpoch;
 @property (nonatomic) int dlEpochSize;
 @end
