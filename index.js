@@ -18,8 +18,12 @@ export default class SpeedTest {
             RNSpeedTest.testDownloadSpeed(url, timeout, reportInterval);
         }
     }
-    static testUploadSpeedWithTimeout(url, epochSize, timeout) {
+    static testUploadSpeedWithTimeout(url, epochSize, timeout, reportInterval) {
+        if (Platform.OS === 'ios')
         RNSpeedTest.testUploadSpeedWithTimeout(url, epochSize, timeout);
+        else if (Platform.OS === 'android') {
+            RNSpeedTest.testUploadSpeed(url, timeout, reportInterval)
+        }
     }
     static async getNetworkType() {
         return RNSpeedTest.getNetworkType();

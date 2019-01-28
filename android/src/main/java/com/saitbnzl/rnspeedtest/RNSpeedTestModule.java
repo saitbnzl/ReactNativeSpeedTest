@@ -66,6 +66,11 @@ public class RNSpeedTestModule extends ReactContextBaseJavaModule {
     mSpeedTestSocket.startFixedDownload(url,timeout,reportInterval);
   }
 
+  @ReactMethod
+  public void testUploadSpeed(String url, int timeout, int reportInterval){
+    mSpeedTestSocket.startFixedUpload(url,10000000,timeout,reportInterval);
+  }
+
   @Override
   public String getName() {
     return "RNSpeedTest";
