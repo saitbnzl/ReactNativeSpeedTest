@@ -20,10 +20,7 @@
 }
 
 
-- (dispatch_queue_t)methodQueue
-{
-    return dispatch_get_main_queue();
-}
+
 
 RCT_EXPORT_MODULE(RNSpeedTest)
 
@@ -39,6 +36,8 @@ RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(
     self.bytesReceived = 0;
     self.dlEpochSize = epochSize;
     self.dlEpoch = 1;
+    self.stage = 0;
+    
     NSLog(@"Download test started timeout: %fms epochSize: %d url: %@", timeoutMs, epochSize, urlString);
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
@@ -54,18 +53,26 @@ RCT_EXPORT_METHOD(testUploadSpeedWithTimeout:(NSString*) urlString epochSize:(in
     self.bytesSent = 0;
     self.dlEpochSize = epochSize;
     self.dlEpoch = 1;
-    
-    NSURL *fileUrl = [[NSBundle mainBundle]
-                    URLForResource: @"dummy" withExtension:@"text"];
-    
+    self.lastElapsed = 0;
+    self.stage = 1;
+
     
     NSLog(@"Upload test started timeout: %fms epochSize: %d url: %@", timeoutMs, epochSize, urlString);
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.timeoutIntervalForResource = timeoutMs/1000;
     NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
-    NSURLRequest *nsUrlRequest = [NSURLRequest requestWithURL:self.url];
-    [[session uploadTaskWithRequest:nsUrlRequest fromFile:fileUrl] resume];
+    NSURL *url = [NSURL URLWithString:urlString];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestUseProtocolCachePolicy
+                                                       timeoutInterval:timeoutMs/1000.0];
+    [request setHTTPMethod:@"POST"];
+    void * bytes = malloc(1024*1024*100);
+    NSData * postData = [NSData dataWithBytes:bytes length:1024*1024*100];
+    free(bytes);
+    [request setHTTPBody:postData];
+
+    [[session dataTaskWithRequest:request] resume];
 })
 
 RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
@@ -117,18 +124,35 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    NSLog(@"data received %d", (int)[data length]);
-    self.bytesReceived += [data length];
-    self.stopTime = CFAbsoluteTimeGetCurrent();
+    if(self.stage==0){
+        NSLog(@"data received %d", (int)[data length]/1024/1024*8);
+        self.bytesReceived += [data length];
+    
+        CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
+    
+        if(elapsed-self.lastElapsed>1){
+            CGFloat speed = elapsed != 0 ? self.bytesReceived / elapsed / 1024.0 / 1024.0 * 8 : -1;
+            [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
+            self.lastElapsed = elapsed;
+        }
+    }
 }
 
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
-   didSendBodyData:(int64_t)bytesSent
+    didSendBodyData:(int64_t)bytesSent
     totalBytesSent:(int64_t)totalBytesSent
-totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
-    self.bytesSent += bytesSent;
-    NSLog(@"didSendBodyData %ld %ld of %ld", (long)bytesSent, (long)totalBytesSent, (long)totalBytesExpectedToSend);
+    totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
+    if(self.stage==1){
+        self.bytesSent += bytesSent;
+        NSLog(@"didSendBodyData %ld %ld of %ld", (long)bytesSent, (long)totalBytesSent, (long)totalBytesExpectedToSend);
+        CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
+        if(elapsed-self.lastElapsed>1){
+            CGFloat speed = elapsed != 0 ? totalBytesSent / elapsed / 1024.0 / 1024.0 * 8 : -1;
+            [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
+            self.lastElapsed = elapsed;
+        }
+    }
 }
 
 
@@ -140,8 +164,8 @@ totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     CFAbsoluteTime elapsed = self.stopTime - self.startTime;
-    CGFloat speed = elapsed != 0 ? self.bytesReceived / (CFAbsoluteTimeGetCurrent() - self.startTime) / 1024.0 / 1024.0 * 8 : -1;
-    
+    CGFloat speed = elapsed != 0 ? self.bytesReceived / elapsed / 1024.0 / 1024.0 * 8 : -1;
+    [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @(speed)}];
     // treat timeout as no error (as we're testing speed, not worried about whether we got entire resource or not
     
     if (error == nil || ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorTimedOut)) {
@@ -151,7 +175,7 @@ totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
             self.dlEpoch += 1;
             self.startTime = CFAbsoluteTimeGetCurrent();
             self.bytesReceived = 0;
-            [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
+            
         }
         else{
             [[session dataTaskWithURL:self.url] cancel];

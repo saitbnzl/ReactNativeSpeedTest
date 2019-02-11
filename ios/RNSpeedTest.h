@@ -13,10 +13,12 @@ Reachability* reachability;
 @interface RNSpeedTest : RCTEventEmitter <RCTBridgeModule, NSURLSessionDelegate, NSURLSessionDataDelegate>
 @property (nonatomic) CFAbsoluteTime startTime;
 @property (nonatomic) CFAbsoluteTime stopTime;
+@property (nonatomic) CFAbsoluteTime lastElapsed;
 @property (nonatomic) NSURL *url;
 @property (nonatomic) long long bytesReceived;
 @property (nonatomic) long long bytesSent;
 @property (nonatomic) int dlEpoch;
 @property (nonatomic) int dlEpochSize;
+@property (nonatomic) int stage;
 @end
   
