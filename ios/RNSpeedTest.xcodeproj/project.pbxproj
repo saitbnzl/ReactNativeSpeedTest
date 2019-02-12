@@ -10,6 +10,8 @@
 		B3E7B58A1CC2AC0600A0062D /* RNSpeedTest.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNSpeedTest.m */; };
 		D8120DAD21F419FA005B5CB8 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = D8120DAC21F419FA005B5CB8 /* Reachability.m */; };
 		D8120DB021F41BBE005B5CB8 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */; };
+		D82E44512212832200820EE5 /* GBPing.m in Sources */ = {isa = PBXBuildFile; fileRef = D82E444C2212832200820EE5 /* GBPing.m */; };
+		D82E44522212832200820EE5 /* GBPingSummary.m in Sources */ = {isa = PBXBuildFile; fileRef = D82E444E2212832200820EE5 /* GBPingSummary.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,6 +34,12 @@
 		D8120DAC21F419FA005B5CB8 /* Reachability.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		D8120DAE21F41A0F005B5CB8 /* Reachability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		D82E444B2212832200820EE5 /* GBPingSummary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBPingSummary.h; sourceTree = "<group>"; };
+		D82E444C2212832200820EE5 /* GBPing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBPing.m; sourceTree = "<group>"; };
+		D82E444D2212832200820EE5 /* GBPing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBPing.h; sourceTree = "<group>"; };
+		D82E444E2212832200820EE5 /* GBPingSummary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBPingSummary.m; sourceTree = "<group>"; };
+		D82E444F2212832200820EE5 /* GBPing-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GBPing-Prefix.pch"; sourceTree = "<group>"; };
+		D82E44502212832200820EE5 /* ICMPHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICMPHeader.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +65,7 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				D82E444A2212832200820EE5 /* GBPing */,
 				D8120DAE21F41A0F005B5CB8 /* Reachability.h */,
 				D8120DAC21F419FA005B5CB8 /* Reachability.m */,
 				B3E7B5881CC2AC0600A0062D /* RNSpeedTest.h */,
@@ -73,6 +82,19 @@
 				D8120DAA21F4188B005B5CB8 /* SystemConfiguration.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D82E444A2212832200820EE5 /* GBPing */ = {
+			isa = PBXGroup;
+			children = (
+				D82E444B2212832200820EE5 /* GBPingSummary.h */,
+				D82E444C2212832200820EE5 /* GBPing.m */,
+				D82E444D2212832200820EE5 /* GBPing.h */,
+				D82E444E2212832200820EE5 /* GBPingSummary.m */,
+				D82E444F2212832200820EE5 /* GBPing-Prefix.pch */,
+				D82E44502212832200820EE5 /* ICMPHeader.h */,
+			);
+			path = GBPing;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -131,8 +153,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D82E44512212832200820EE5 /* GBPing.m in Sources */,
 				D8120DAD21F419FA005B5CB8 /* Reachability.m in Sources */,
 				B3E7B58A1CC2AC0600A0062D /* RNSpeedTest.m in Sources */,
+				D82E44522212832200820EE5 /* GBPingSummary.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

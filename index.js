@@ -20,9 +20,16 @@ export default class SpeedTest {
     }
     static testUploadSpeedWithTimeout(url, epochSize, timeout, reportInterval) {
         if (Platform.OS === 'ios')
-        RNSpeedTest.testUploadSpeedWithTimeout(url, epochSize, timeout);
+            RNSpeedTest.testUploadSpeedWithTimeout(url, epochSize, timeout);
         else if (Platform.OS === 'android') {
             RNSpeedTest.testUploadSpeed(url, timeout, reportInterval)
+        }
+    }
+    static testPing(url, timeout) {
+        if (Platform.OS === 'ios')
+            RNSpeedTest.pingTest(url, timeout);
+        else if (Platform.OS === 'android') {
+            RNSpeedTest.pingTest(url, timeout);
         }
     }
     static async getNetworkType() {

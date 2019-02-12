@@ -2,6 +2,7 @@
 #import "RNSpeedTest.h"
 #import <React/RCTLog.h>
 
+
 @implementation RNSpeedTest
 {
     bool hasListeners;
@@ -29,6 +30,35 @@ RCT_EXPORT_MODULE(RNSpeedTest)
     return @[@"onCompleteTest", @"onErrorTest", @"onCompleteEpoch"];
 }
 
+RCT_EXPORT_METHOD(pingTest:(NSString*) urlString timeoutMs:(double)timeoutMs {
+    self.url = [NSURL URLWithString:urlString];
+    self.ping = [[GBPing alloc] init];
+    self.ping.host = @"netinternet.hiztesti.com.tr";
+    self.ping.delegate = self;
+    self.ping.timeout = 1.0;
+    self.ping.pingPeriod = 0.9;
+    self.stage = 3;
+    
+    [self.ping setupWithBlock:^(BOOL success, NSError *error) { //necessary to resolve hostname
+        if (success) {
+            //start pinging
+            [self.ping startPinging];
+            
+            double delayInSeconds = timeoutMs/1000;
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                NSLog(@"stop it");
+                [self.ping stop];
+                self.ping = nil;
+                [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @"0"}];
+            });
+        }
+        else {
+            NSLog(@"failed to start");
+        }
+    }];
+})
+
 RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(int)epochSize timeoutMs:(double)timeoutMs {
     self.url = [NSURL URLWithString:urlString];
     self.startTime = CFAbsoluteTimeGetCurrent();
@@ -42,7 +72,7 @@ RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.timeoutIntervalForResource = timeoutMs/1000;
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:[NSOperationQueue mainQueue]];
     [[session dataTaskWithURL:self.url] resume];
 })
 
@@ -126,14 +156,16 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     if(self.stage==0){
         NSLog(@"data received %d", (int)[data length]/1024/1024*8);
-        self.bytesReceived += [data length];
+        self.bytesReceived += (float)[data length];
     
         CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
     
-        if(elapsed-self.lastElapsed>1){
+        if(elapsed>0.5){
             CGFloat speed = elapsed != 0 ? self.bytesReceived / elapsed / 1024.0 / 1024.0 * 8 : -1;
             [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
             self.lastElapsed = elapsed;
+            self.bytesReceived = 0;
+            self.startTime = CFAbsoluteTimeGetCurrent();
         }
     }
 }
@@ -144,10 +176,9 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
     totalBytesSent:(int64_t)totalBytesSent
     totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
     if(self.stage==1){
-        self.bytesSent += bytesSent;
         NSLog(@"didSendBodyData %ld %ld of %ld", (long)bytesSent, (long)totalBytesSent, (long)totalBytesExpectedToSend);
         CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
-        if(elapsed-self.lastElapsed>1){
+        if(elapsed-self.lastElapsed>2){
             CGFloat speed = elapsed != 0 ? totalBytesSent / elapsed / 1024.0 / 1024.0 * 8 : -1;
             [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(speed)}];
             self.lastElapsed = elapsed;
@@ -168,29 +199,56 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
     [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @(speed)}];
     // treat timeout as no error (as we're testing speed, not worried about whether we got entire resource or not
     
-    if (error == nil || ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorTimedOut)) {
-        NSLog(@"Download epoch %d of %d: %f", self.dlEpoch, self.dlEpochSize, speed);
-        if(self.dlEpoch<self.dlEpochSize){
-            [[session dataTaskWithURL:self.url] resume];
-            self.dlEpoch += 1;
-            self.startTime = CFAbsoluteTimeGetCurrent();
-            self.bytesReceived = 0;
-            
-        }
-        else{
-            [[session dataTaskWithURL:self.url] cancel];
-            if (hasListeners) {
-                [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @(speed)}];
-            }
-        }
+//    if (error == nil || ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorTimedOut)) {
+//        NSLog(@"Download epoch %d of %d: %f", self.dlEpoch, self.dlEpochSize, speed);
+//        if(self.dlEpoch<self.dlEpochSize){
+//            [[session dataTaskWithURL:self.url] resume];
+//            self.dlEpoch += 1;
+//            self.startTime = CFAbsoluteTimeGetCurrent();
+//            self.bytesReceived = 0;
+//
+//        }
+//        else{
+//            [[session dataTaskWithURL:self.url] cancel];
+//            if (hasListeners) {
+//                [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @(speed)}];
+//            }
+//        }
+//
+//    } else {
+//        NSLog(@"Test is done: %@", error.userInfo);
+//        if(hasListeners){
+//            [self sendEventWithName:@"onErrorTest" body:@{@"error": error.userInfo}];
+//        }
+//
+//    }
+}
 
-    } else {
-        NSLog(@"Test is done: %@", error.userInfo);
-        if(hasListeners){
-            [self sendEventWithName:@"onErrorTest" body:@{@"error": error.userInfo}];
-        }
-        
-    }
+-(void)ping:(GBPing *)pinger didReceiveReplyWithSummary:(GBPingSummary *)summary {
+    NSLog(@"REPLY>  %@", summary);
+     CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
+     [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(elapsed)}];
+}
+
+-(void)ping:(GBPing *)pinger didReceiveUnexpectedReplyWithSummary:(GBPingSummary *)summary {
+    NSLog(@"BREPLY> %@", summary);
+}
+
+-(void)ping:(GBPing *)pinger didSendPingWithSummary:(GBPingSummary *)summary {
+    NSLog(@"SENT>   %@", summary);
+    self.startTime = CFAbsoluteTimeGetCurrent();
+}
+
+-(void)ping:(GBPing *)pinger didTimeoutWithSummary:(GBPingSummary *)summary {
+    NSLog(@"TIMOUT> %@", summary);
+}
+
+-(void)ping:(GBPing *)pinger didFailWithError:(NSError *)error {
+    NSLog(@"FAIL>   %@", error);
+}
+
+-(void)ping:(GBPing *)pinger didFailToSendPingWithSummary:(GBPingSummary *)summary error:(NSError *)error {
+    NSLog(@"FSENT>  %@, %@", summary, error);
 }
 
 @end
