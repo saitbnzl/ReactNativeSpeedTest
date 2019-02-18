@@ -27,37 +27,49 @@ RCT_EXPORT_MODULE(RNSpeedTest)
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"onCompleteTest", @"onErrorTest", @"onCompleteEpoch"];
+    return @[@"onCompleteTest", @"onErrorTest", @"onCompleteEpoch", @"onTestCanceled"];
+}
+
+RCT_REMAP_METHOD(cancelTest,
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    if(self.stage==1){
+        [[self.session dataTaskWithURL:self.url] cancel];
+    }
+    else if(self.stage==2){
+        [[self.session dataTaskWithRequest:self.mutableRequest] cancel];
+    }
+    else if(self.stage==3){
+        [self.ping stop];
+    }
+    resolve(nil);
 }
 
 RCT_EXPORT_METHOD(pingTest:(NSString*) urlString timeoutMs:(double)timeoutMs {
     self.url = [NSURL URLWithString:urlString];
-    self.ping = [[GBPing alloc] init];
-    self.ping.host = @"netinternet.hiztesti.com.tr";
-    self.ping.delegate = self;
-    self.ping.timeout = 1.0;
-    self.ping.pingPeriod = 0.9;
+    self.startTime = CFAbsoluteTimeGetCurrent();
+    self.stopTime = self.startTime;
+    self.bytesReceived = 0;
     self.stage = 3;
     
-    [self.ping setupWithBlock:^(BOOL success, NSError *error) { //necessary to resolve hostname
-        if (success) {
-            //start pinging
-            [self.ping startPinging];
-            
-            double delayInSeconds = timeoutMs/1000;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                NSLog(@"stop it");
-                [self.ping stop];
-                self.ping = nil;
-                [self sendEventWithName:@"onCompleteTest" body:@{@"speed": @"0"}];
-            });
-        }
-        else {
-            NSLog(@"failed to start");
-        }
-    }];
+    SimplePing *simplePingClient = [[SimplePing alloc] initWithHostName:@"cloudeos.hiztesti.com.tr"];
+    [simplePingClient start];
 })
+
+- (void)simplePing:(SimplePing *)pinger didSendPacket:(NSData *)packet
+{
+    self.startTime=CFAbsoluteTimeGetCurrent();
+    RCTLogInfo(@"ping sent at %f", self.startTime);
+}
+
+- (void)simplePing:(SimplePing *)pinger didReceivePingResponsePacket:(NSData *)packet
+{
+    double latency = CFAbsoluteTimeGetCurrent()-self.startTime;
+    [self sendEventWithName:@"onCompleteEpoch" body:@{@"speed": @(latency)}];
+    RCTLogInfo(@"ping response received at %f", CFAbsoluteTimeGetCurrent());
+    //TODO - Do something with latency
+}
 
 RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(int)epochSize timeoutMs:(double)timeoutMs {
     self.url = [NSURL URLWithString:urlString];
@@ -66,14 +78,14 @@ RCT_EXPORT_METHOD(testDownloadSpeedWithTimeout:(NSString*) urlString epochSize:(
     self.bytesReceived = 0;
     self.dlEpochSize = epochSize;
     self.dlEpoch = 1;
-    self.stage = 0;
+    self.stage = 1;
     
     NSLog(@"Download test started timeout: %fms epochSize: %d url: %@", timeoutMs, epochSize, urlString);
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.timeoutIntervalForResource = timeoutMs/1000;
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:[NSOperationQueue mainQueue]];
-    [[session dataTaskWithURL:self.url] resume];
+    self.session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+    [[self.session dataTaskWithURL:self.url] resume];
 })
 
 RCT_EXPORT_METHOD(testUploadSpeedWithTimeout:(NSString*) urlString epochSize:(int)epochSize timeoutMs:(double)timeoutMs {
@@ -84,25 +96,25 @@ RCT_EXPORT_METHOD(testUploadSpeedWithTimeout:(NSString*) urlString epochSize:(in
     self.dlEpochSize = epochSize;
     self.dlEpoch = 1;
     self.lastElapsed = 0;
-    self.stage = 1;
+    self.stage = 2;
 
     
     NSLog(@"Upload test started timeout: %fms epochSize: %d url: %@", timeoutMs, epochSize, urlString);
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.timeoutIntervalForResource = timeoutMs/1000;
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+    self.session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
     NSURL *url = [NSURL URLWithString:urlString];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+    self.mutableRequest = [NSMutableURLRequest requestWithURL:url
                                                            cachePolicy:NSURLRequestUseProtocolCachePolicy
                                                        timeoutInterval:timeoutMs/1000.0];
-    [request setHTTPMethod:@"POST"];
+    [self.mutableRequest setHTTPMethod:@"POST"];
     void * bytes = malloc(1024*1024*100);
     NSData * postData = [NSData dataWithBytes:bytes length:1024*1024*100];
     free(bytes);
-    [request setHTTPBody:postData];
+    [self.mutableRequest setHTTPBody:postData];
 
-    [[session dataTaskWithRequest:request] resume];
+    [[self.session dataTaskWithRequest:self.mutableRequest] resume];
 })
 
 RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
@@ -154,7 +166,7 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    if(self.stage==0){
+    if(self.stage==1){
         NSLog(@"data received %d", (int)[data length]/1024/1024*8);
         self.bytesReceived += (float)[data length];
     
@@ -175,7 +187,7 @@ RCT_EXPORT_METHOD(getNetworkType :(RCTPromiseResolveBlock)resolve
     didSendBodyData:(int64_t)bytesSent
     totalBytesSent:(int64_t)totalBytesSent
     totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend{
-    if(self.stage==1){
+    if(self.stage==2){
         NSLog(@"didSendBodyData %ld %ld of %ld", (long)bytesSent, (long)totalBytesSent, (long)totalBytesExpectedToSend);
         CFAbsoluteTime elapsed = (CFAbsoluteTimeGetCurrent() - self.startTime);
         if(elapsed-self.lastElapsed>2){

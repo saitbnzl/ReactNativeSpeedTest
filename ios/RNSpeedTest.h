@@ -7,15 +7,17 @@
 #import "Reachability.h"
 #import<CoreTelephony/CTTelephonyNetworkInfo.h>
 #import "GBPing/GBPing.h"
+#import "SimplePing.h"
 #endif
 Reachability* reachability;
 
-@interface RNSpeedTest : RCTEventEmitter <RCTBridgeModule, NSURLSessionDelegate, NSURLSessionDataDelegate, GBPingDelegate>
+@interface RNSpeedTest : RCTEventEmitter <RCTBridgeModule, NSURLSessionDelegate, NSURLSessionDataDelegate, GBPingDelegate, SimplePingDelegate>
 @property (nonatomic) CFAbsoluteTime startTime;
 @property (nonatomic) CFAbsoluteTime stopTime;
 @property (nonatomic) CFAbsoluteTime lastElapsed;
 @property (nonatomic) NSURL *url;
 @property (nonatomic) NSURLSession *session;
+@property (nonatomic) NSMutableURLRequest *mutableRequest;
 @property (nonatomic) long long bytesReceived;
 @property (nonatomic) long long bytesSent;
 @property (nonatomic) int dlEpoch;

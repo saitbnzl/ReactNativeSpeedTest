@@ -11,6 +11,14 @@ export default class SpeedTest {
     static addListener(name, listener) {
         RNSpeedTestEvt.addListener(name, listener);
     }
+
+    static cancelTest(url, epochSize, timeout, reportInterval) {
+        if (Platform.OS === 'ios')
+            return RNSpeedTest.cancelTest();
+        else if (Platform.OS === 'android') {
+            // @TODO: CANCEL ANDROID TEST
+        }
+    }
     static testDownloadSpeedWithTimeout(url, epochSize, timeout, reportInterval) {
         if (Platform.OS === 'ios')
             RNSpeedTest.testDownloadSpeedWithTimeout(url, epochSize, timeout);

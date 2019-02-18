@@ -12,6 +12,7 @@
 		D8120DB021F41BBE005B5CB8 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8120DAF21F41BBE005B5CB8 /* CoreTelephony.framework */; };
 		D82E44512212832200820EE5 /* GBPing.m in Sources */ = {isa = PBXBuildFile; fileRef = D82E444C2212832200820EE5 /* GBPing.m */; };
 		D82E44522212832200820EE5 /* GBPingSummary.m in Sources */ = {isa = PBXBuildFile; fileRef = D82E444E2212832200820EE5 /* GBPingSummary.m */; };
+		D84A9EF2221A8F30008D40C4 /* SimplePing.m in Sources */ = {isa = PBXBuildFile; fileRef = D84A9EF1221A8F30008D40C4 /* SimplePing.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +41,8 @@
 		D82E444E2212832200820EE5 /* GBPingSummary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBPingSummary.m; sourceTree = "<group>"; };
 		D82E444F2212832200820EE5 /* GBPing-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GBPing-Prefix.pch"; sourceTree = "<group>"; };
 		D82E44502212832200820EE5 /* ICMPHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICMPHeader.h; sourceTree = "<group>"; };
+		D84A9EF1221A8F30008D40C4 /* SimplePing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SimplePing.m; sourceTree = "<group>"; };
+		D84A9EF3221A8FD5008D40C4 /* SimplePing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimplePing.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +68,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				D84A9EF3221A8FD5008D40C4 /* SimplePing.h */,
+				D84A9EF1221A8F30008D40C4 /* SimplePing.m */,
 				D82E444A2212832200820EE5 /* GBPing */,
 				D8120DAE21F41A0F005B5CB8 /* Reachability.h */,
 				D8120DAC21F419FA005B5CB8 /* Reachability.m */,
@@ -153,6 +158,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D84A9EF2221A8F30008D40C4 /* SimplePing.m in Sources */,
 				D82E44512212832200820EE5 /* GBPing.m in Sources */,
 				D8120DAD21F419FA005B5CB8 /* Reachability.m in Sources */,
 				B3E7B58A1CC2AC0600A0062D /* RNSpeedTest.m in Sources */,
